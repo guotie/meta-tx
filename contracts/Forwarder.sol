@@ -8,7 +8,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
-
+import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 
 /**
  * @dev forwarder to be used together with an ERC2771 compatible contract. See {ERC2771Context}.
@@ -34,6 +34,8 @@ contract Forwarder is Initializable,
 
     mapping(address => uint256) private _nonces;
 
+    // make Forwarder contract can receive ETH
+    receive() external payable {}
 
     function initialize() public payable initializer {
         // "constructor" code...
@@ -97,5 +99,19 @@ contract Forwarder is Initializable,
         // assert(gasleft() > req.gas / 63);
         require(success, "failed");
         return (success, returndata);
+    }
+
+    // make contract can receive NFT
+    function onERC721Received(
+        address operator,
+        address from,
+        uint256 tokenId,
+        bytes calldata data
+    ) external pure returns (bytes4) {
+        operator;
+        from;
+        tokenId;
+        data;
+        return IERC721Receiver.onERC721Received.selector;
     }
 }
