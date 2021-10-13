@@ -16,3 +16,10 @@ typechain
 cache
 artifacts
 deployed-contracts.json
+
+# transfer
+scripts/transfer.ts
+scripts/swap.ts
+
+# openzeppelin
+.openzeppelin/

@@ -24,6 +24,9 @@ export const verifyContract = async (
     id: string,
     instanceAddr: string,
     args: (string | string[])[]) => {
+      if (hre.network.name === 'hardhat') {
+        return
+      }
       try {
           // 先等一会 否则有可能在链上还看不到合约地址
           console.log('verify %s at %s:', id, instanceAddr)
@@ -69,7 +72,7 @@ export const saveContractInJsonDb = async (contractId: string, addr: string) => 
     .write();
 }
 
-export async function getImplementationAddress(proxyAddress) {
+export async function getImplementationAddress(proxyAddress: string) {
   const implHex = await ethers.provider.getStorageAt(
       proxyAddress,
       "0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc"
