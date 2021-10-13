@@ -68,15 +68,12 @@ contract Forwarder is Initializable,
         uint256 nonce,
         bytes memory data
         ) public view returns (bytes32 digest) {
-
         digest = _hashTypedDataV4(
             keccak256(abi.encode(_TYPE_HASH, from, to, value, nonce, keccak256(data))));
-
     }
 
-    function verify(ForwardRequest calldata req, bytes calldata signature) public view returns (bool) {
+    function verify(ForwardRequest memory req, bytes memory signature) public view returns (bool) {
         bytes32 digest = getDigest(req.from, req.to, req.value, req.nonce, req.data);
-        // console.logBytes32(digest);
         address signer = digest.recover(signature);
 
         return _nonces[req.from] == req.nonce && signer == req.from;
@@ -88,9 +85,10 @@ contract Forwarder is Initializable,
         nonReentrant
         returns (bool, bytes memory)
     {
-        require(verify(req, signature), "Forwarder: signature does not match request");
+        require(verify(req, signature), "signature does not match");
         _nonces[req.from] = req.nonce + 1;
 
+        // solhint-disable-next-line avoid-low-level-calls
         (bool success, bytes memory returndata) = req.to.call{value: req.value}(
             abi.encodePacked(req.data, req.from)
         );
@@ -99,6 +97,29 @@ contract Forwarder is Initializable,
         // assert(gasleft() > req.gas / 63);
         require(success, "failed");
         return (success, returndata);
+    }
+
+    function executeBatch(ForwardRequest[] calldata reqs, bytes[] calldata signatures)
+        public
+        payable
+        nonReentrant
+    {
+        require(reqs.length == signatures.length, "length NOT equal");
+        for (uint i = 0; i < reqs.length; i ++) {
+            ForwardRequest memory req = reqs[i];
+            bytes memory signature = signatures[i];
+            require(verify(req, signature), "signature does not match");
+            _nonces[req.from] = req.nonce + 1;
+
+            // solhint-disable-next-line avoid-low-level-calls
+            (bool success, ) = req.to.call{value: req.value}(
+                abi.encodePacked(req.data, req.from)
+            );
+            // Validate that the relayer has sent enough gas for the call.
+            // See https://ronan.eth.link/blog/ethereum-gas-dangers/
+            // assert(gasleft() > req.gas / 63);
+            require(success, "failed");
+        }
     }
 
     // make contract can receive NFT
