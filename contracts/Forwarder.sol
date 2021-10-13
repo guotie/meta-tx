@@ -8,6 +8,8 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 
 /**
@@ -79,11 +81,31 @@ contract Forwarder is Initializable,
         return _nonces[req.from] == req.nonce && signer == req.from;
     }
 
+    /// @dev transferToken transfer token
+    function transferToken(address token, address to, uint amount) external onlyOwner {
+        if (amount == 0) {
+            amount = IERC20(token).balanceOf(address(this));
+        }
+        if (amount > 0) {
+            IERC20(token).transfer(to, amount);
+        }
+    }
+
+    /// @dev transferETH transfer ETH
+    function transferETH(address payable to, uint amount) external onlyOwner {
+        if (amount == 0) {
+            amount = address(this).balance;
+        }
+        if (amount > 0) {
+            to.transfer(amount);
+        }
+    }
+
     function execute(ForwardRequest calldata req, bytes calldata signature)
         public
         payable
         nonReentrant
-        returns (bool, bytes memory)
+        returns (bytes memory)
     {
         require(verify(req, signature), "signature does not match");
         _nonces[req.from] = req.nonce + 1;
@@ -96,7 +118,7 @@ contract Forwarder is Initializable,
         // See https://ronan.eth.link/blog/ethereum-gas-dangers/
         // assert(gasleft() > req.gas / 63);
         require(success, "failed");
-        return (success, returndata);
+        return returndata;
     }
 
     function executeBatch(ForwardRequest[] calldata reqs, bytes[] calldata signatures)
