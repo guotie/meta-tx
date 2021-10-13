@@ -36,6 +36,7 @@
   "devDependencies": {
     "@types/lowdb": "1.0.0",
     "@types/mocha": "^9.0.0",
+    "hardhat-local-networks-config-plugin": "^0.0.6",
     "ts-node": "^10.3.0",
     "typescript": "^4.4.3"
   }
