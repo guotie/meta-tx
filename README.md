@@ -11,3 +11,8 @@ see forward.ts, forwardTx()
 # how to build ForwardRequest.data
 
 see test example
+
+# doc
+
+中文说明: https://www.tiege.dev/post/meta-transaction-and-implement/
+
